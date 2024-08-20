@@ -29,6 +29,8 @@ from warnings import warn
 
 _T = TypeVar("_T")
 
+__author__ = "CallocGD"
+__version__ = "0.1.0"
 
 def __dataclass_transform__(
     *,
@@ -104,7 +106,7 @@ def load_key_fields(model: "RobtopModel") -> dict[bytes, Tuple[str, FieldInfo]]:
 @__dataclass_transform__(
     kw_only_default=True, field_descriptors=(Field, FieldInfo, field)
 )
-class RobtopModel(BaseModel, extra="forbid"):
+class RobtopModel(BaseModel):
     """A serializable Response Model for any Geometry dash Object"""
 
     if typing.TYPE_CHECKING:
@@ -114,14 +116,20 @@ class RobtopModel(BaseModel, extra="forbid"):
         __key_fields__: dict[bytes, Tuple[str, FieldInfo]]
         """Robtop String Numbers in Bytes in order to assist with deserilization of any given field"""
 
+    def __init_subclass__(cls, **kwargs):
+        # NOTE: This setup is meant for bypassing a bigger problem with pydantic's broken fucked up system...
+        cls.default_splitter = kwargs.pop("splitter", None)
+        return super().__init_subclass__(**kwargs)
+    
+
     @classmethod
     def __pydantic_init_subclass__(cls, **kwargs):
         cls.__key_fields__ = load_key_fields(cls)
-        return super().__init_subclass__(**kwargs)
+        return cls.__init_subclass__(**kwargs)
  
     @classmethod
     def from_robtop(cls, data: bytes, splitter: Optional[bytes] = None):
-        fields_dict = load_key_fields(cls)
+        fields_dict = cls.__key_fields__
         resp = data.split(splitter or cls.default_splitter)
         model_dict = {}
         while resp:
@@ -198,3 +206,7 @@ class RobtopModel(BaseModel, extra="forbid"):
                 )
 
         return buffer
+
+
+
+
