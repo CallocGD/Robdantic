@@ -24,7 +24,7 @@ print((model.x, model.y))
 class NameModel(RobtopModel, split=b":"):
     name:str = Field(key=1)
 
-model = Model2.from_robtop(b"1:john doe")
+model = NameModel.from_robtop(b"1:john doe")
 assert model.name == "john doe"
 # re-encode the model to bytes format
 print(model.to_robtop())
